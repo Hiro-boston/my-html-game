@@ -1,0 +1,245 @@
+﻿<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>15パズル</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+            overflow: hidden;
+            padding: 10px;
+        }
+
+        #controls {
+            margin-bottom: 20px;
+        }
+
+        #game-container {
+            width: 100%;
+            max-width: 400px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 5px;
+            margin-bottom: 20px;
+        }
+
+        .tile {
+            aspect-ratio: 1 / 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem;
+            background-color: #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .empty {
+            background-color: #fff;
+            cursor: default;
+        }
+
+        #timer {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        #result-popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 2rem;
+            max-width: 90%;
+            word-wrap: break-word;
+        }
+
+        @media (max-width: 600px) {
+            #game-container {
+                grid-template-columns: repeat(4, 60px);
+                grid-template-rows: repeat(4, 60px);
+            }
+
+            .tile {
+                width: 60px;
+                height: 60px;
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <button id="start-button">スタート</button>
+        <button id="pause-button">ポーズ</button>
+        <button id="next-game-button">次のゲーム</button>
+    </div>
+    <div id="timer">タイム: 0分 0秒</div>
+    <div id="game-container"></div>
+    <div id="result-popup"></div>
+    <script>
+        const size = 4;
+        const gameContainer = document.getElementById('game-container');
+        const startButton = document.getElementById('start-button');
+        const pauseButton = document.getElementById('pause-button');
+        const nextGameButton = document.getElementById('next-game-button');
+        const timerDisplay = document.getElementById('timer');
+        const resultPopup = document.getElementById('result-popup');
+
+        let tiles = [];
+        let timer = null;
+        let timeElapsed = 0;
+        let isGameStarted = false;
+        let isPaused = false;
+
+        // Initialize the game
+        function initializeGame() {
+            const numbers = Array.from({ length: size * size - 1 }, (_, i) => i + 1);
+            numbers.push(null); // Empty space
+            shuffleArray(numbers);
+
+            tiles = [];
+            gameContainer.innerHTML = '';
+            resultPopup.style.display = 'none'; // Hide the result popup
+            for (let i = 0; i < size * size; i++) {
+                const tile = document.createElement('div');
+                tile.classList.add('tile');
+                if (numbers[i] !== null) {
+                    tile.textContent = numbers[i];
+                } else {
+                    tile.classList.add('empty');
+                }
+                tile.addEventListener('click', () => handleTileClick(i));
+                tile.addEventListener('touchstart', () => handleTileClick(i)); // タッチイベント対応
+                gameContainer.appendChild(tile);
+                tiles.push(tile);
+            }
+            resetTimer();
+        }
+
+        // Shuffle array (Fisher-Yates algorithm)
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        // Handle tile click
+        function handleTileClick(index) {
+            if (!isGameStarted || isPaused) return;
+
+            const emptyIndex = tiles.findIndex(tile => tile.classList.contains('empty'));
+            const [emptyRow, emptyCol] = [Math.floor(emptyIndex / size), emptyIndex % size];
+            const [clickedRow, clickedCol] = [Math.floor(index / size), index % size];
+
+            // Check if the clicked tile is adjacent to the empty space
+            if (Math.abs(emptyRow - clickedRow) + Math.abs(emptyCol - clickedCol) === 1) {
+                // Swap tiles
+                tiles[emptyIndex].textContent = tiles[index].textContent;
+                tiles[emptyIndex].classList.remove('empty');
+                tiles[index].textContent = '';
+                tiles[index].classList.add('empty');
+
+                // Check if the player has won
+                if (checkWin()) {
+                    stopTimer();
+                    displayWinMessage();
+                }
+            }
+        }
+
+        // Check if the game is won
+        function checkWin() {
+            for (let i = 0; i < size * size - 1; i++) {
+                if (tiles[i].textContent != i + 1) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        // Timer functions
+        function startTimer() {
+            if (timer) clearInterval(timer);
+            timer = setInterval(() => {
+                timeElapsed++;
+                updateTimerDisplay();
+            }, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(timer);
+        }
+
+        function resetTimer() {
+            stopTimer();
+            timeElapsed = 0;
+            updateTimerDisplay();
+        }
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeElapsed / 60);
+            const seconds = timeElapsed % 60;
+            timerDisplay.textContent = `タイム: ${minutes}分 ${seconds}秒`;
+        }
+
+        // Display win message
+        function displayWinMessage() {
+            const minutes = Math.floor(timeElapsed / 60);
+            const seconds = timeElapsed % 60;
+            resultPopup.textContent = `クリア！おめでとうございます！\n時間: ${minutes}分 ${seconds}秒`;
+            resultPopup.style.display = 'block';
+        }
+
+        // Pause and restart functions
+        function pauseGame() {
+            isPaused = true;
+            stopTimer();
+            pauseButton.textContent = 'リスタート';
+        }
+
+        function restartGame() {
+            isPaused = false;
+            startTimer();
+            pauseButton.textContent = 'ポーズ';
+        }
+
+        // Button events
+        startButton.addEventListener('click', () => {
+            isGameStarted = true;
+            resetTimer();
+            startTimer();
+        });
+
+        nextGameButton.addEventListener('click', () => {
+            isGameStarted = false;
+            initializeGame();
+        });
+
+        pauseButton.addEventListener('click', () => {
+            if (isPaused) {
+                restartGame();
+            } else {
+                pauseGame();
+            }
+        });
+
+        // Start the game for the first time
+        initializeGame();
+    </script>
+</body>
+</html>
