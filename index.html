@@ -22,6 +22,21 @@
             margin-bottom: 20px;
         }
 
+        #controls button {
+            font-size: 1.5rem; /* フォントサイズを大きく */
+            padding: 10px 20px; /* ボタンの余白を増やす */
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            background-color: #4CAF50; /* ボタンの背景色 */
+            color: white;
+            cursor: pointer;
+        }
+
+        #controls button:hover {
+            background-color: #45a049;
+        }
+
         #game-container {
             width: 100%;
             max-width: 400px;
@@ -154,20 +169,60 @@
             const [emptyRow, emptyCol] = [Math.floor(emptyIndex / size), emptyIndex % size];
             const [clickedRow, clickedCol] = [Math.floor(index / size), index % size];
 
-            // Check if the clicked tile is adjacent to the empty space
+            // If the clicked tile is directly adjacent to the empty space, move it
             if (Math.abs(emptyRow - clickedRow) + Math.abs(emptyCol - clickedCol) === 1) {
-                // Swap tiles
-                tiles[emptyIndex].textContent = tiles[index].textContent;
-                tiles[emptyIndex].classList.remove('empty');
-                tiles[index].textContent = '';
-                tiles[index].classList.add('empty');
+                swapTiles(index, emptyIndex);
+            } else {
+                // If the empty space is in a straight line, move all tiles in between
+                moveTilesInLine(index, emptyIndex, clickedRow, clickedCol, emptyRow, emptyCol);
+            }
 
-                // Check if the player has won
-                if (checkWin()) {
-                    stopTimer();
-                    displayWinMessage();
+            // Check if the player has won
+            if (checkWin()) {
+                stopTimer();
+                displayWinMessage();
+            }
+        }
+
+        // Move tiles in a straight line if possible
+        function moveTilesInLine(clickedIndex, emptyIndex, clickedRow, clickedCol, emptyRow, emptyCol) {
+            // Move tiles vertically if in the same column
+            if (clickedCol === emptyCol) {
+                if (clickedRow < emptyRow) {
+                    // Move down
+                    for (let i = emptyRow; i > clickedRow; i--) {
+                        swapTiles((i - 1) * size + clickedCol, i * size + clickedCol);
+                    }
+                } else {
+                    // Move up
+                    for (let i = emptyRow; i < clickedRow; i++) {
+                        swapTiles((i + 1) * size + clickedCol, i * size + clickedCol);
+                    }
                 }
             }
+
+            // Move tiles horizontally if in the same row
+            if (clickedRow === emptyRow) {
+                if (clickedCol < emptyCol) {
+                    // Move right
+                    for (let i = emptyCol; i > clickedCol; i--) {
+                        swapTiles(clickedRow * size + (i - 1), clickedRow * size + i);
+                    }
+                } else {
+                    // Move left
+                    for (let i = emptyCol; i < clickedCol; i++) {
+                        swapTiles(clickedRow * size + (i + 1), clickedRow * size + i);
+                    }
+                }
+            }
+        }
+
+        // Swap two tiles
+        function swapTiles(fromIndex, toIndex) {
+            tiles[toIndex].textContent = tiles[fromIndex].textContent;
+            tiles[toIndex].classList.remove('empty');
+            tiles[fromIndex].textContent = '';
+            tiles[fromIndex].classList.add('empty');
         }
 
         // Check if the game is won
