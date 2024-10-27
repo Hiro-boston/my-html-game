@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
@@ -65,19 +65,22 @@
             font-size: 2rem;
             max-width: 90%;
             word-wrap: break-word;
+            text-align: center;
         }
 
-        @media (max-width: 600px) {
-            #game-container {
-                grid-template-columns: repeat(4, 60px);
-                grid-template-rows: repeat(4, 60px);
-            }
+        #close-button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 1rem;
+            background-color: #f0f0f0;
+            color: black;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
 
-            .tile {
-                width: 60px;
-                height: 60px;
-                font-size: 1.5rem;
-            }
+        #close-button:hover {
+            background-color: #ddd;
         }
     </style>
 </head>
@@ -89,7 +92,10 @@
     </div>
     <div id="timer">タイム: 0分 0秒</div>
     <div id="game-container"></div>
-    <div id="result-popup"></div>
+    <div id="result-popup">
+        <div id="result-message"></div>
+        <button id="close-button">閉じる</button>
+    </div>
     <script>
         const size = 4;
         const gameContainer = document.getElementById('game-container');
@@ -98,6 +104,8 @@
         const nextGameButton = document.getElementById('next-game-button');
         const timerDisplay = document.getElementById('timer');
         const resultPopup = document.getElementById('result-popup');
+        const resultMessage = document.getElementById('result-message');
+        const closeButton = document.getElementById('close-button');
 
         let tiles = [];
         let timer = null;
@@ -201,9 +209,14 @@
         function displayWinMessage() {
             const minutes = Math.floor(timeElapsed / 60);
             const seconds = timeElapsed % 60;
-            resultPopup.textContent = `クリア！おめでとうございます！\n時間: ${minutes}分 ${seconds}秒`;
+            resultMessage.textContent = `クリア！おめでとうございます！\n時間: ${minutes}分 ${seconds}秒`;
             resultPopup.style.display = 'block';
         }
+
+        // Close the win message
+        closeButton.addEventListener('click', () => {
+            resultPopup.style.display = 'none';
+        });
 
         // Pause and restart functions
         function pauseGame() {
