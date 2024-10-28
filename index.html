@@ -363,6 +363,19 @@
             startButton.classList.remove('disabled');
         }
 
+        /* ポーズボタンの機能 */
+        function pauseGame() {
+            isPaused = true; // ポーズフラグを立てる
+            stopTimer(); // タイマーを停止
+            pauseButton.textContent = 'リスタート'; // ボタンのテキストを「リスタート」に変更
+        }
+
+        function restartGame() {
+            isPaused = false; // ポーズフラグを解除
+            startTimer(); // タイマーを再開
+            pauseButton.textContent = 'ポーズ'; // ボタンのテキストを「ポーズ」に戻す
+        }
+
         /* ポップアップのボタンイベント */
         closeButton.addEventListener('click', () => {
             resultPopup.style.display = 'none';
