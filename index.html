@@ -234,6 +234,39 @@
             }
         }
 
+        /* クリックした数字と空きマスの間にあるタイルを一つずつ動かす */
+        function moveTilesInLine(clickedIndex, emptyIndex, clickedRow, clickedCol, emptyRow, emptyCol) {
+            /* 同じ列で空きマスが上または下にある場合 */
+            if (clickedCol === emptyCol) {
+                if (clickedRow < emptyRow) {
+                    // 空きマスが下にある場合、クリックされたマスと空きマスの間のタイルを順に下に動かす
+                    for (let i = emptyRow; i > clickedRow; i--) {
+                        swapTiles((i - 1) * size + clickedCol, i * size + clickedCol);
+                    }
+                } else {
+                    // 空きマスが上にある場合、クリックされたマスと空きマスの間のタイルを順に上に動かす
+                    for (let i = emptyRow; i < clickedRow; i++) {
+                        swapTiles((i + 1) * size + clickedCol, i * size + clickedCol);
+                    }
+                }
+            }
+
+            /* 同じ行で空きマスが右または左にある場合 */
+            if (clickedRow === emptyRow) {
+                if (clickedCol < emptyCol) {
+                    // 空きマスが右にある場合、クリックされたマスと空きマスの間のタイルを順に右に動かす
+                    for (let i = emptyCol; i > clickedCol; i--) {
+                        swapTiles(clickedRow * size + (i - 1), clickedRow * size + i);
+                    }
+                } else {
+                    // 空きマスが左にある場合、クリックされたマスと空きマスの間のタイルを順に左に動かす
+                    for (let i = emptyCol; i < clickedCol; i++) {
+                        swapTiles(clickedRow * size + (i + 1), clickedRow * size + i);
+                    }
+                }
+            }
+        }
+
         /* タイルの交換 */
         function swapTiles(fromIndex, toIndex) {
             tiles[toIndex].textContent = tiles[fromIndex].textContent;
