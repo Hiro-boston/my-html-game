@@ -75,7 +75,7 @@
             margin-bottom: 10px;
         }
 
-        #result-popup, #how-to-play-popup {
+        #result-popup, #how-to-play-popup, #unsolvable-popup {
             display: none;
             position: fixed;
             top: 50%;
@@ -91,7 +91,7 @@
             text-align: center;
         }
 
-        #close-button, #close-how-to-play-button {
+        #close-button, #close-how-to-play-button, #close-unsolvable-button {
             margin-top: 20px;
             padding: 10px 20px;
             font-size: 1rem;
@@ -102,7 +102,7 @@
             cursor: pointer;
         }
 
-        #close-button:hover, #close-how-to-play-button:hover {
+        #close-button:hover, #close-how-to-play-button:hover, #close-unsolvable-button:hover {
             background-color: #ddd;
         }
     </style>
@@ -128,6 +128,13 @@
             <button id="close-how-to-play-button">閉じる</button>
         </div>
     </div>
+    <div id="unsolvable-popup">
+        <div>
+            <h2>解けないパズル</h2>
+            <p>このパズルは解けません。もう一度シャッフルしてください。</p>
+            <button id="close-unsolvable-button">閉じる</button>
+        </div>
+    </div>
     <script>
         const size = 4;
         const gameContainer = document.getElementById('game-container');
@@ -141,6 +148,8 @@
         const closeButton = document.getElementById('close-button');
         const howToPlayPopup = document.getElementById('how-to-play-popup');
         const closeHowToPlayButton = document.getElementById('close-how-to-play-button');
+        const unsolvablePopup = document.getElementById('unsolvable-popup');
+        const closeUnsolvableButton = document.getElementById('close-unsolvable-button');
 
         let tiles = [];
         let timer = null;
@@ -151,14 +160,17 @@
 
         // Initialize the game
         function initializeGame() {
-            const numbers = Array.from({ length: size * size - 1 }, (_, i) => i + 1);
-            numbers.push(null); // Empty space
-            shuffleArray(numbers);
+            let numbers;
+            do {
+                numbers = Array.from({ length: size * size - 1 }, (_, i) => i + 1);
+                numbers.push(null); // Empty space
+                shuffleArray(numbers);
+            } while (!isSolvable(numbers)); // 解ける配置になるまでシャッフルを繰り返す
 
             tiles = [];
             gameContainer.innerHTML = '';
-            resultPopup.style.display = 'none'; // Hide the result popup
-            isGameWon = false; // クリア状態をリセット
+            resultPopup.style.display = 'none';
+            isGameWon = false;
             for (let i = 0; i < size * size; i++) {
                 const tile = document.createElement('div');
                 tile.classList.add('tile');
@@ -175,6 +187,29 @@
             resetTimer();
         }
 
+        // Check if the puzzle is solvable
+        function isSolvable(numbers) {
+            let inversionCount = 0;
+            const flattenedNumbers = numbers.filter(num => num !== null);
+
+            for (let i = 0; i < flattenedNumbers.length - 1; i++) {
+                for (let j = i + 1; j < flattenedNumbers.length; j++) {
+                    if (flattenedNumbers[i] > flattenedNumbers[j]) {
+                        inversionCount++;
+                    }
+                }
+            }
+
+            const emptyRowFromBottom = Math.floor(numbers.indexOf(null) / size) + 1;
+            const isEvenGrid = (size % 2 === 0);
+
+            if (isEvenGrid) {
+                return ((emptyRowFromBottom % 2 === 0) === (inversionCount % 2 !== 0));
+            } else {
+                return (inversionCount % 2 === 0);
+            }
+        }
+
         // Shuffle array (Fisher-Yates algorithm)
         function shuffleArray(array) {
             for (let i = array.length - 1; i > 0; i--) {
@@ -185,58 +220,48 @@
 
         // Handle tile click
         function handleTileClick(index) {
-            if (!isGameStarted || isPaused || isGameWon) return; // クリア後は操作不可
+            if (!isGameStarted || isPaused || isGameWon) return;
 
             const emptyIndex = tiles.findIndex(tile => tile.classList.contains('empty'));
             const [emptyRow, emptyCol] = [Math.floor(emptyIndex / size), emptyIndex % size];
             const [clickedRow, clickedCol] = [Math.floor(index / size), index % size];
 
-            // If the clicked tile is directly adjacent to the empty space, move it
             if (Math.abs(emptyRow - clickedRow) + Math.abs(emptyCol - clickedCol) === 1) {
                 swapTiles(index, emptyIndex);
             } else {
-                // If the empty space is in a straight line, move all tiles in between
                 moveTilesInLine(index, emptyIndex, clickedRow, clickedCol, emptyRow, emptyCol);
             }
 
-            // Check if rows are correct
             checkRows();
 
-            // Check if the player has won
             if (checkWin()) {
                 stopTimer();
                 displayWinMessage();
                 changeAllTilesToWinColor();
-                isGameWon = true; // ゲームがクリアされたと記録
+                isGameWon = true;
             }
         }
 
         // Move tiles in a straight line if possible
         function moveTilesInLine(clickedIndex, emptyIndex, clickedRow, clickedCol, emptyRow, emptyCol) {
-            // Move tiles vertically if in the same column
             if (clickedCol === emptyCol) {
                 if (clickedRow < emptyRow) {
-                    // Move down
                     for (let i = emptyRow; i > clickedRow; i--) {
                         swapTiles((i - 1) * size + clickedCol, i * size + clickedCol);
                     }
                 } else {
-                    // Move up
                     for (let i = emptyRow; i < clickedRow; i++) {
                         swapTiles((i + 1) * size + clickedCol, i * size + clickedCol);
                     }
                 }
             }
 
-            // Move tiles horizontally if in the same row
             if (clickedRow === emptyRow) {
                 if (clickedCol < emptyCol) {
-                    // Move right
                     for (let i = emptyCol; i > clickedCol; i--) {
                         swapTiles(clickedRow * size + (i - 1), clickedRow * size + i);
                     }
                 } else {
-                    // Move left
                     for (let i = emptyCol; i < clickedCol; i++) {
                         swapTiles(clickedRow * size + (i + 1), clickedRow * size + i);
                     }
@@ -270,7 +295,6 @@
                     return tiles[startIndex + i].textContent == num.toString();
                 });
 
-                // Change color if the row is correct
                 for (let col = 0; col < size; col++) {
                     const tileIndex = startIndex + col;
                     if (correct) {
@@ -308,7 +332,6 @@
             stopTimer();
             timeElapsed = 0;
             updateTimerDisplay();
-            // Reset tile colors
             tiles.forEach(tile => {
                 tile.classList.remove('win-color');
                 tile.classList.remove('correct-row');
@@ -342,6 +365,11 @@
         // Close "How to Play" popup
         closeHowToPlayButton.addEventListener('click', () => {
             howToPlayPopup.style.display = 'none';
+        });
+
+        // Close the unsolvable message
+        closeUnsolvableButton.addEventListener('click', () => {
+            unsolvablePopup.style.display = 'none';
         });
 
         // Pause and restart functions
