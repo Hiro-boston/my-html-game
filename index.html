@@ -231,7 +231,6 @@
                 displayWinMessage();
                 changeAllTilesToWinColor();
                 isGameWon = true;
-                disableStartButton(); // クリア後は「スタート」ボタンを無効化
             }
         }
 
@@ -353,6 +352,7 @@
             isGameStarted = true;
             resetTimer();
             startTimer();
+            disableStartButton(); // ゲーム開始時に「スタート」ボタンを無効化
         });
 
         nextGameButton.addEventListener('click', () => {
