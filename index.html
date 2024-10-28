@@ -62,6 +62,10 @@
             cursor: default;
         }
 
+        .correct-row {
+            background-color: #add8e6; /* 正しい行の背景色を薄い青色に変更 */
+        }
+
         #timer {
             font-size: 1.5rem;
             margin-bottom: 10px;
@@ -177,6 +181,9 @@
                 moveTilesInLine(index, emptyIndex, clickedRow, clickedCol, emptyRow, emptyCol);
             }
 
+            // Check if rows are correct
+            checkRows();
+
             // Check if the player has won
             if (checkWin()) {
                 stopTimer();
@@ -233,6 +240,27 @@
                 }
             }
             return true;
+        }
+
+        // Check if rows are correct
+        function checkRows() {
+            for (let row = 0; row < size; row++) {
+                const startIndex = row * size;
+                const correct = Array.from({ length: size }, (_, i) => startIndex + i + 1).every((num, i) => {
+                    return tiles[startIndex + i].textContent == num.toString();
+                });
+
+                // Change color if the row is correct
+                for (let col = 0; col < size; col++) {
+                    const tileIndex = startIndex + col;
+                    if (correct) {
+                        tiles[tileIndex].classList.add('correct-row');
+                    } else {
+                        tiles[tileIndex].classList.remove('correct-row');
+                    }
+                }
+                }
+            }
         }
 
         // Timer functions
