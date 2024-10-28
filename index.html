@@ -192,6 +192,7 @@
             let inversionCount = 0;
             const flattenedNumbers = numbers.filter(num => num !== null);
 
+            // Calculate inversion count
             for (let i = 0; i < flattenedNumbers.length - 1; i++) {
                 for (let j = i + 1; j < flattenedNumbers.length; j++) {
                     if (flattenedNumbers[i] > flattenedNumbers[j]) {
@@ -200,13 +201,16 @@
                 }
             }
 
-            const emptyRowFromBottom = Math.floor(numbers.indexOf(null) / size) + 1;
-            const isEvenGrid = (size % 2 === 0);
+            // Get the row position of the empty space (from the bottom)
+            const emptyRowFromBottom = size - Math.floor(numbers.indexOf(null) / size);
 
-            if (isEvenGrid) {
-                return ((emptyRowFromBottom % 2 === 0) === (inversionCount % 2 !== 0));
+            // Check solvability based on grid size
+            if (size % 2 !== 0) {
+                // For odd grid sizes, the inversion count must be even
+                return inversionCount % 2 === 0;
             } else {
-                return (inversionCount % 2 === 0);
+                // For even grid sizes, consider the row position of the empty space
+                return (emptyRowFromBottom % 2 === 0) === (inversionCount % 2 !== 0);
             }
         }
 
