@@ -147,6 +147,7 @@
         let timeElapsed = 0;
         let isGameStarted = false;
         let isPaused = false;
+        let isGameWon = false; // ゲームがクリアされたかどうかのフラグ
 
         // Initialize the game
         function initializeGame() {
@@ -157,6 +158,7 @@
             tiles = [];
             gameContainer.innerHTML = '';
             resultPopup.style.display = 'none'; // Hide the result popup
+            isGameWon = false; // クリア状態をリセット
             for (let i = 0; i < size * size; i++) {
                 const tile = document.createElement('div');
                 tile.classList.add('tile');
@@ -183,7 +185,7 @@
 
         // Handle tile click
         function handleTileClick(index) {
-            if (!isGameStarted || isPaused) return;
+            if (!isGameStarted || isPaused || isGameWon) return; // クリア後は操作不可
 
             const emptyIndex = tiles.findIndex(tile => tile.classList.contains('empty'));
             const [emptyRow, emptyCol] = [Math.floor(emptyIndex / size), emptyIndex % size];
@@ -205,6 +207,7 @@
                 stopTimer();
                 displayWinMessage();
                 changeAllTilesToWinColor();
+                isGameWon = true; // ゲームがクリアされたと記録
             }
         }
 
