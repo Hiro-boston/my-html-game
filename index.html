@@ -71,7 +71,7 @@
             margin-bottom: 10px;
         }
 
-        #result-popup {
+        #result-popup, #how-to-play-popup {
             display: none;
             position: fixed;
             top: 50%;
@@ -81,13 +81,13 @@
             color: white;
             padding: 20px;
             border-radius: 10px;
-            font-size: 2rem;
+            font-size: 1.5rem;
             max-width: 90%;
             word-wrap: break-word;
             text-align: center;
         }
 
-        #close-button {
+        #close-button, #close-how-to-play-button {
             margin-top: 20px;
             padding: 10px 20px;
             font-size: 1rem;
@@ -98,7 +98,7 @@
             cursor: pointer;
         }
 
-        #close-button:hover {
+        #close-button:hover, #close-how-to-play-button:hover {
             background-color: #ddd;
         }
     </style>
@@ -108,6 +108,7 @@
         <button id="start-button">スタート</button>
         <button id="pause-button">ポーズ</button>
         <button id="next-game-button">次のゲーム</button>
+        <button id="how-to-play-button">遊び方</button>
     </div>
     <div id="timer">タイム: 0分 0秒</div>
     <div id="game-container"></div>
@@ -115,16 +116,27 @@
         <div id="result-message"></div>
         <button id="close-button">閉じる</button>
     </div>
+    <div id="how-to-play-popup">
+        <div>
+            <h2>遊び方</h2>
+            <p>数字をクリックして、空いているマスへ移動させます。</p>
+            <p>1から15の数字を、左上から順番に並べるとクリアです。</p>
+            <button id="close-how-to-play-button">閉じる</button>
+        </div>
+    </div>
     <script>
         const size = 4;
         const gameContainer = document.getElementById('game-container');
         const startButton = document.getElementById('start-button');
         const pauseButton = document.getElementById('pause-button');
         const nextGameButton = document.getElementById('next-game-button');
+        const howToPlayButton = document.getElementById('how-to-play-button');
         const timerDisplay = document.getElementById('timer');
         const resultPopup = document.getElementById('result-popup');
         const resultMessage = document.getElementById('result-message');
         const closeButton = document.getElementById('close-button');
+        const howToPlayPopup = document.getElementById('how-to-play-popup');
+        const closeHowToPlayButton = document.getElementById('close-how-to-play-button');
 
         let tiles = [];
         let timer = null;
@@ -298,6 +310,16 @@
         // Close the win message
         closeButton.addEventListener('click', () => {
             resultPopup.style.display = 'none';
+        });
+
+        // Show "How to Play" popup
+        howToPlayButton.addEventListener('click', () => {
+            howToPlayPopup.style.display = 'block';
+        });
+
+        // Close "How to Play" popup
+        closeHowToPlayButton.addEventListener('click', () => {
+            howToPlayPopup.style.display = 'none';
         });
 
         // Pause and restart functions
