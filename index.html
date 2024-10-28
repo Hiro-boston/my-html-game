@@ -157,6 +157,7 @@
             isGameWon = false;
             enableStartButton(); // 新しいゲーム時に「スタート」ボタンを有効化
             enablePauseButton(); // 新しいゲーム時に「ポーズ」ボタンを有効化
+            resetPauseButtonText(); // ポーズボタンを「ポーズ」に戻す
             for (let i = 0; i < size * size; i++) {
                 const tile = document.createElement('div');
                 tile.classList.add('tile');
@@ -377,6 +378,11 @@
             pauseButton.classList.remove('disabled');
         }
 
+        /* ポーズボタンの表示をリセット */
+        function resetPauseButtonText() {
+            pauseButton.textContent = 'ポーズ';
+        }
+
         /* ポーズボタンの機能 */
         function pauseGame() {
             if (!isGameStarted) return; // スタートボタンが押されていない場合は無効
@@ -419,6 +425,7 @@
 
         nextGameButton.addEventListener('click', () => {
             isGameStarted = false;
+            resetPauseButtonText(); // 「次のゲーム」ボタンで「ポーズ」にリセット
             initializeGame(); // 新しいゲームの開始時に「スタート」ボタンが有効化される
         });
 
