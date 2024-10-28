@@ -23,12 +23,12 @@
         }
 
         #controls button {
-            font-size: 1.5rem; /* フォントサイズを大きく */
-            padding: 10px 20px; /* ボタンの余白を増やす */
+            font-size: 1.5rem;
+            padding: 10px 20px;
             margin: 5px;
             border: none;
             border-radius: 5px;
-            background-color: #4CAF50; /* ボタンの背景色 */
+            background-color: #4CAF50;
             color: white;
             cursor: pointer;
         }
@@ -64,6 +64,10 @@
 
         .correct-row {
             background-color: #add8e6; /* 正しい行の背景色を薄い青色に変更 */
+        }
+
+        .win-color {
+            background-color: #add8e6; /* クリア時の色を薄い青色に変更 */
         }
 
         #timer {
@@ -200,6 +204,7 @@
             if (checkWin()) {
                 stopTimer();
                 displayWinMessage();
+                changeAllTilesToWinColor();
             }
         }
 
@@ -274,6 +279,15 @@
             }
         }
 
+        // Change all tiles to win color
+        function changeAllTilesToWinColor() {
+            tiles.forEach(tile => {
+                if (!tile.classList.contains('empty')) {
+                    tile.classList.add('win-color');
+                }
+            });
+        }
+
         // Timer functions
         function startTimer() {
             if (timer) clearInterval(timer);
@@ -291,6 +305,11 @@
             stopTimer();
             timeElapsed = 0;
             updateTimerDisplay();
+            // Reset tile colors
+            tiles.forEach(tile => {
+                tile.classList.remove('win-color');
+                tile.classList.remove('correct-row');
+            });
         }
 
         function updateTimerDisplay() {
