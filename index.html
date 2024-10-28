@@ -379,12 +379,14 @@
 
         /* ポーズボタンの機能 */
         function pauseGame() {
+            if (!isGameStarted) return; // スタートボタンが押されていない場合は無効
             isPaused = true; // ポーズフラグを立てる
             stopTimer(); // タイマーを停止
             pauseButton.textContent = 'リスタート'; // ボタンのテキストを「リスタート」に変更
         }
 
         function restartGame() {
+            if (!isGameStarted) return; // スタートボタンが押されていない場合は無効
             isPaused = false; // ポーズフラグを解除
             startTimer(); // タイマーを再開
             pauseButton.textContent = 'ポーズ'; // ボタンのテキストを「ポーズ」に戻す
