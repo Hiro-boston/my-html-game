@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>15パズル</title>
     <style>
+        /* 全体のレイアウトとボタン、パズルブロックのデザイン */
         body {
             font-family: Arial, sans-serif;
             display: flex;
@@ -18,10 +19,6 @@
             padding: 10px;
         }
 
-        #controls {
-            margin-bottom: 20px;
-        }
-
         #controls button {
             font-size: 1.5rem;
             padding: 10px 20px;
@@ -33,8 +30,10 @@
             cursor: pointer;
         }
 
-        #controls button:hover {
-            background-color: #45a049;
+        /* 非活性化されたボタンのデザイン */
+        #controls button.disabled {
+            background-color: #888; /* グレー系の色 */
+            cursor: not-allowed;
         }
 
         #game-container {
@@ -62,19 +61,11 @@
             cursor: default;
         }
 
-        .correct-row {
-            background-color: #add8e6; /* 正しい行の背景色を薄い青色に変更 */
+        .correct-row, .win-color {
+            background-color: #add8e6; /* 正しい行とクリア時のブロック背景色 */
         }
 
-        .win-color {
-            background-color: #add8e6; /* クリア時の色を薄い青色に変更 */
-        }
-
-        #timer {
-            font-size: 1.5rem;
-            margin-bottom: 10px;
-        }
-
+        /* ポップアップデザイン */
         #result-popup, #how-to-play-popup, #unsolvable-popup {
             display: none;
             position: fixed;
@@ -87,56 +78,47 @@
             border-radius: 10px;
             font-size: 1.5rem;
             max-width: 90%;
-            word-wrap: break-word;
             text-align: center;
-        }
-
-        #close-button, #close-how-to-play-button, #close-unsolvable-button {
-            margin-top: 20px;
-            padding: 10px 20px;
-            font-size: 1rem;
-            background-color: #f0f0f0;
-            color: black;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        #close-button:hover, #close-how-to-play-button:hover, #close-unsolvable-button:hover {
-            background-color: #ddd;
         }
     </style>
 </head>
 <body>
+    <!-- コントロールボタン -->
     <div id="controls">
         <button id="start-button">スタート</button>
         <button id="pause-button">ポーズ</button>
         <button id="next-game-button">次のゲーム</button>
         <button id="how-to-play-button">遊び方</button>
     </div>
+    
+    <!-- タイマー表示 -->
     <div id="timer">タイム: 0分 0秒</div>
+    
+    <!-- パズルの配置コンテナ -->
     <div id="game-container"></div>
+
+    <!-- ポップアップ（クリア、遊び方、不可能なパズル） -->
     <div id="result-popup">
         <div id="result-message"></div>
         <button id="close-button">閉じる</button>
     </div>
     <div id="how-to-play-popup">
-        <div>
-            <h2>遊び方</h2>
-            <p>数字をクリックして、空いているマスへ移動させます。</p>
-            <p>1から15の数字を、左上から順番に並べるとクリアです。</p>
-            <button id="close-how-to-play-button">閉じる</button>
-        </div>
+        <h2>遊び方</h2>
+        <p>数字をクリックして、空いているマスへ移動させます。</p>
+        <p>1から15の数字を、左上から順番に並べるとクリアです。</p>
+        <button id="close-how-to-play-button">閉じる</button>
     </div>
     <div id="unsolvable-popup">
-        <div>
-            <h2>解けないパズル</h2>
-            <p>このパズルは解けません。もう一度シャッフルしてください。</p>
-            <button id="close-unsolvable-button">閉じる</button>
-        </div>
+        <h2>解けないパズル</h2>
+        <p>このパズルは解けません。もう一度シャッフルしてください。</p>
+        <button id="close-unsolvable-button">閉じる</button>
     </div>
+
     <script>
+        /* グリッドのサイズ設定 */
         const size = 4;
+
+        /* 各要素の取得 */
         const gameContainer = document.getElementById('game-container');
         const startButton = document.getElementById('start-button');
         const pauseButton = document.getElementById('pause-button');
@@ -151,26 +133,29 @@
         const unsolvablePopup = document.getElementById('unsolvable-popup');
         const closeUnsolvableButton = document.getElementById('close-unsolvable-button');
 
+        /* タイル、タイマー、状態フラグの初期化 */
         let tiles = [];
         let timer = null;
         let timeElapsed = 0;
         let isGameStarted = false;
         let isPaused = false;
-        let isGameWon = false; // ゲームがクリアされたかどうかのフラグ
+        let isGameWon = false;
 
-        // Initialize the game
+        /* ゲームの初期化関数 */
         function initializeGame() {
             let numbers;
             do {
                 numbers = Array.from({ length: size * size - 1 }, (_, i) => i + 1);
-                numbers.push(null); // Empty space
+                numbers.push(null); // 空きマス
                 shuffleArray(numbers);
-            } while (!isSolvable(numbers)); // 解ける配置になるまでシャッフルを繰り返す
+            } while (!isSolvable(numbers)); // 解ける配置が得られるまでシャッフル
 
+            /* タイルを作成し、コンテナに追加 */
             tiles = [];
             gameContainer.innerHTML = '';
             resultPopup.style.display = 'none';
             isGameWon = false;
+            enableStartButton(); // 新しいゲーム時に「スタート」ボタンを有効化
             for (let i = 0; i < size * size; i++) {
                 const tile = document.createElement('div');
                 tile.classList.add('tile');
@@ -180,19 +165,19 @@
                     tile.classList.add('empty');
                 }
                 tile.addEventListener('click', () => handleTileClick(i));
-                tile.addEventListener('touchstart', () => handleTileClick(i)); // タッチイベント対応
+                tile.addEventListener('touchstart', () => handleTileClick(i));
                 gameContainer.appendChild(tile);
                 tiles.push(tile);
             }
             resetTimer();
         }
 
-        // Check if the puzzle is solvable
+        /* 解けるパズルかを判定する関数 */
         function isSolvable(numbers) {
             let inversionCount = 0;
             const flattenedNumbers = numbers.filter(num => num !== null);
 
-            // Calculate inversion count
+            /* 反転数をカウント */
             for (let i = 0; i < flattenedNumbers.length - 1; i++) {
                 for (let j = i + 1; j < flattenedNumbers.length; j++) {
                     if (flattenedNumbers[i] > flattenedNumbers[j]) {
@@ -201,20 +186,19 @@
                 }
             }
 
-            // Get the row position of the empty space (from the bottom)
+            /* 空きマスの位置を下からの行数で取得 */
             const emptyRowFromBottom = size - Math.floor(numbers.indexOf(null) / size);
 
-            // Check solvability based on grid size
+            /* サイズが奇数の場合：反転数が偶数であることが必要 */
             if (size % 2 !== 0) {
-                // For odd grid sizes, the inversion count must be even
                 return inversionCount % 2 === 0;
             } else {
-                // For even grid sizes, consider the row position of the empty space
+                /* サイズが偶数の場合：空きマスの行数と反転数を考慮 */
                 return (emptyRowFromBottom % 2 === 0) === (inversionCount % 2 !== 0);
             }
         }
 
-        // Shuffle array (Fisher-Yates algorithm)
+        /* 配列のシャッフル（Fisher-Yatesアルゴリズム） */
         function shuffleArray(array) {
             for (let i = array.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -222,58 +206,36 @@
             }
         }
 
-        // Handle tile click
+        /* タイルクリック時の処理 */
         function handleTileClick(index) {
             if (!isGameStarted || isPaused || isGameWon) return;
 
+            /* 空きマスの位置とクリックされたマスを取得 */
             const emptyIndex = tiles.findIndex(tile => tile.classList.contains('empty'));
             const [emptyRow, emptyCol] = [Math.floor(emptyIndex / size), emptyIndex % size];
             const [clickedRow, clickedCol] = [Math.floor(index / size), index % size];
 
+            /* クリックされたマスが空きマスの隣なら交換 */
             if (Math.abs(emptyRow - clickedRow) + Math.abs(emptyCol - clickedCol) === 1) {
                 swapTiles(index, emptyIndex);
             } else {
+                /* 直線上にある場合、空きマス方向にタイルを移動 */
                 moveTilesInLine(index, emptyIndex, clickedRow, clickedCol, emptyRow, emptyCol);
             }
 
             checkRows();
 
+            /* クリア判定 */
             if (checkWin()) {
                 stopTimer();
                 displayWinMessage();
                 changeAllTilesToWinColor();
                 isGameWon = true;
+                disableStartButton(); // クリア後は「スタート」ボタンを無効化
             }
         }
 
-        // Move tiles in a straight line if possible
-        function moveTilesInLine(clickedIndex, emptyIndex, clickedRow, clickedCol, emptyRow, emptyCol) {
-            if (clickedCol === emptyCol) {
-                if (clickedRow < emptyRow) {
-                    for (let i = emptyRow; i > clickedRow; i--) {
-                        swapTiles((i - 1) * size + clickedCol, i * size + clickedCol);
-                    }
-                } else {
-                    for (let i = emptyRow; i < clickedRow; i++) {
-                        swapTiles((i + 1) * size + clickedCol, i * size + clickedCol);
-                    }
-                }
-            }
-
-            if (clickedRow === emptyRow) {
-                if (clickedCol < emptyCol) {
-                    for (let i = emptyCol; i > clickedCol; i--) {
-                        swapTiles(clickedRow * size + (i - 1), clickedRow * size + i);
-                    }
-                } else {
-                    for (let i = emptyCol; i < clickedCol; i++) {
-                        swapTiles(clickedRow * size + (i + 1), clickedRow * size + i);
-                    }
-                }
-            }
-        }
-
-        // Swap two tiles
+        /* タイルの交換 */
         function swapTiles(fromIndex, toIndex) {
             tiles[toIndex].textContent = tiles[fromIndex].textContent;
             tiles[toIndex].classList.remove('empty');
@@ -281,7 +243,7 @@
             tiles[fromIndex].classList.add('empty');
         }
 
-        // Check if the game is won
+        /* クリア判定 */
         function checkWin() {
             for (let i = 0; i < size * size - 1; i++) {
                 if (tiles[i].textContent != i + 1) {
@@ -291,7 +253,7 @@
             return true;
         }
 
-        // Check if rows are correct
+        /* タイルが整列されている行の色を変更 */
         function checkRows() {
             for (let row = 0; row < size; row++) {
                 const startIndex = row * size;
@@ -310,7 +272,7 @@
             }
         }
 
-        // Change all tiles to win color
+        /* クリア時の全タイルの色変更 */
         function changeAllTilesToWinColor() {
             tiles.forEach(tile => {
                 if (!tile.classList.contains('empty')) {
@@ -319,7 +281,7 @@
             });
         }
 
-        // Timer functions
+        /* タイマー管理 */
         function startTimer() {
             if (timer) clearInterval(timer);
             timer = setInterval(() => {
@@ -342,13 +304,14 @@
             });
         }
 
+        /* タイマー表示を更新 */
         function updateTimerDisplay() {
             const minutes = Math.floor(timeElapsed / 60);
             const seconds = timeElapsed % 60;
             timerDisplay.textContent = `タイム: ${minutes}分 ${seconds}秒`;
         }
 
-        // Display win message
+        /* クリアメッセージ表示 */
         function displayWinMessage() {
             const minutes = Math.floor(timeElapsed / 60);
             const seconds = timeElapsed % 60;
@@ -356,40 +319,36 @@
             resultPopup.style.display = 'block';
         }
 
-        // Close the win message
+        /* 「スタート」ボタンの無効化 */
+        function disableStartButton() {
+            startButton.disabled = true;
+            startButton.classList.add('disabled');
+        }
+
+        /* 「スタート」ボタンの有効化 */
+        function enableStartButton() {
+            startButton.disabled = false;
+            startButton.classList.remove('disabled');
+        }
+
+        /* ポップアップのボタンイベント */
         closeButton.addEventListener('click', () => {
             resultPopup.style.display = 'none';
         });
 
-        // Show "How to Play" popup
         howToPlayButton.addEventListener('click', () => {
             howToPlayPopup.style.display = 'block';
         });
 
-        // Close "How to Play" popup
         closeHowToPlayButton.addEventListener('click', () => {
             howToPlayPopup.style.display = 'none';
         });
 
-        // Close the unsolvable message
         closeUnsolvableButton.addEventListener('click', () => {
             unsolvablePopup.style.display = 'none';
         });
 
-        // Pause and restart functions
-        function pauseGame() {
-            isPaused = true;
-            stopTimer();
-            pauseButton.textContent = 'リスタート';
-        }
-
-        function restartGame() {
-            isPaused = false;
-            startTimer();
-            pauseButton.textContent = 'ポーズ';
-        }
-
-        // Button events
+        /* ゲームのコントロール */
         startButton.addEventListener('click', () => {
             isGameStarted = true;
             resetTimer();
@@ -398,7 +357,7 @@
 
         nextGameButton.addEventListener('click', () => {
             isGameStarted = false;
-            initializeGame();
+            initializeGame(); // 新しいゲームの開始時に「スタート」ボタンが有効化される
         });
 
         pauseButton.addEventListener('click', () => {
@@ -409,7 +368,7 @@
             }
         });
 
-        // Start the game for the first time
+        /* ゲーム開始時の初期化 */
         initializeGame();
     </script>
 </body>
