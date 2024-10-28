@@ -156,6 +156,7 @@
             resultPopup.style.display = 'none';
             isGameWon = false;
             enableStartButton(); // 新しいゲーム時に「スタート」ボタンを有効化
+            enablePauseButton(); // 新しいゲーム時に「ポーズ」ボタンを有効化
             for (let i = 0; i < size * size; i++) {
                 const tile = document.createElement('div');
                 tile.classList.add('tile');
@@ -231,6 +232,7 @@
                 displayWinMessage();
                 changeAllTilesToWinColor();
                 isGameWon = true;
+                disablePauseButton(); // クリア後は「ポーズ」ボタンを無効化
             }
         }
 
@@ -363,6 +365,18 @@
             startButton.classList.remove('disabled');
         }
 
+        /* 「ポーズ」ボタンの無効化 */
+        function disablePauseButton() {
+            pauseButton.disabled = true;
+            pauseButton.classList.add('disabled');
+        }
+
+        /* 「ポーズ」ボタンの有効化 */
+        function enablePauseButton() {
+            pauseButton.disabled = false;
+            pauseButton.classList.remove('disabled');
+        }
+
         /* ポーズボタンの機能 */
         function pauseGame() {
             isPaused = true; // ポーズフラグを立てる
@@ -407,10 +421,12 @@
         });
 
         pauseButton.addEventListener('click', () => {
-            if (isPaused) {
-                restartGame();
-            } else {
-                pauseGame();
+            if (!isGameWon) { // クリア後はポーズボタンを押せないようにする
+                if (isPaused) {
+                    restartGame();
+                } else {
+                    pauseGame();
+                }
             }
         });
 
