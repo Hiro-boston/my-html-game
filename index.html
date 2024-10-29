@@ -157,6 +157,8 @@
                 shuffleArray(numbers);
             } while (!isSolvable(numbers) || !isGameShuffled(numbers));
 
+            console.log("Numbers array after shuffle:", numbers);  // デバッグ: 数字配列の確認
+
             tiles = [];
             gameContainer.innerHTML = '';
             resultPopup.style.display = 'none';
