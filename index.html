@@ -32,7 +32,7 @@
 
         /* 非活性化されたボタンのデザイン */
         #controls button.disabled {
-            background-color: #888;
+            background-color: #888; /* グレー系の色 */
             cursor: not-allowed;
         }
 
@@ -61,6 +61,10 @@
             cursor: default;
         }
 
+        .correct-row, .win-color {
+            background-color: #add8e6; /* 正しい行とクリア時のブロック背景色 */
+        }
+
         /* ポップアップデザイン */
         #result-popup, #how-to-play-popup, #unsolvable-popup {
             display: none;
@@ -68,30 +72,13 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background-color: rgba(0, 0, 0, 0.9);
+            background-color: rgba(0, 0, 0, 0.8);
             color: white;
             padding: 20px;
             border-radius: 10px;
             font-size: 1.5rem;
             max-width: 90%;
             text-align: center;
-            z-index: 1000;
-        }
-
-        /* 閉じるボタン（バツ印）のスタイル */
-        .close-btn {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            font-size: 1.5rem;
-            background: none;
-            border: none;
-            color: white;
-            cursor: pointer;
-        }
-
-        .close-btn:focus {
-            outline: none;
         }
     </style>
 </head>
@@ -112,24 +99,354 @@
 
     <!-- ポップアップ（クリア、遊び方、不可能なパズル） -->
     <div id="result-popup">
-        <div id="result-message">クリアしました！おめでとうございます！</div>
-        <button class="close-btn" id="close-button">✕</button>
+        <div id="result-message"></div>
+        <button id="close-button">閉じる</button>
     </div>
     <div id="how-to-play-popup">
         <h2>遊び方</h2>
         <p>数字をクリックして、空いているマスへ移動させます。</p>
         <p>1から15の数字を、左上から順番に並べるとクリアです。</p>
-        <button class="close-btn" id="close-how-to-play-button">✕</button>
+        <button id="close-how-to-play-button">閉じる</button>
     </div>
     <div id="unsolvable-popup">
         <h2>解けないパズル</h2>
         <p>このパズルは解けません。もう一度シャッフルしてください。</p>
-        <button class="close-btn" id="close-unsolvable-button">✕</button>
+        <button id="close-unsolvable-button">閉じる</button>
     </div>
 
     <script>
-        /* ここにJavaScriptコード（例示のコードの初期化関数やイベントリスナーなど）を記載 */
-        // JavaScriptコードは例示された内容のままで、ポップアップの動作に影響する変更はありません。
+        /* グリッドのサイズ設定 */
+        const size = 4;
+
+        /* 各要素の取得 */
+        const gameContainer = document.getElementById('game-container');
+        const startButton = document.getElementById('start-button');
+        const pauseButton = document.getElementById('pause-button');
+        const nextGameButton = document.getElementById('next-game-button');
+        const howToPlayButton = document.getElementById('how-to-play-button');
+        const timerDisplay = document.getElementById('timer');
+        const resultPopup = document.getElementById('result-popup');
+        const resultMessage = document.getElementById('result-message');
+        const closeButton = document.getElementById('close-button');
+        const howToPlayPopup = document.getElementById('how-to-play-popup');
+        const closeHowToPlayButton = document.getElementById('close-how-to-play-button');
+        const unsolvablePopup = document.getElementById('unsolvable-popup');
+        const closeUnsolvableButton = document.getElementById('close-unsolvable-button');
+
+        /* タイル、タイマー、状態フラグの初期化 */
+        let tiles = [];
+        let timer = null;
+        let timeElapsed = 0;
+        let isGameStarted = false;
+        let isPaused = false;
+        let isGameWon = false;
+
+        /* ゲームの初期化関数 */
+        function initializeGame() {
+            let numbers;
+            do {
+                numbers = Array.from({ length: size * size - 1 }, (_, i) => i + 1);
+                numbers.push(null); // 空きマス
+                shuffleArray(numbers);
+            } while (!isSolvable(numbers)); // 解ける配置が得られるまでシャッフル
+
+            /* タイルを作成し、コンテナに追加 */
+            tiles = [];
+            gameContainer.innerHTML = '';
+            resultPopup.style.display = 'none';
+            isGameWon = false;
+            enableStartButton(); // 新しいゲーム時に「スタート」ボタンを有効化
+            enablePauseButton(); // 新しいゲーム時に「ポーズ」ボタンを有効化
+            resetPauseButtonText(); // ポーズボタンを「ポーズ」に戻す
+            for (let i = 0; i < size * size; i++) {
+                const tile = document.createElement('div');
+                tile.classList.add('tile');
+                if (numbers[i] !== null) {
+                    tile.textContent = numbers[i];
+                } else {
+                    tile.classList.add('empty');
+                }
+                tile.addEventListener('click', () => handleTileClick(i));
+                tile.addEventListener('touchstart', () => handleTileClick(i));
+                gameContainer.appendChild(tile);
+                tiles.push(tile);
+            }
+            resetTimer();
+        }
+
+        /* ゲーム開始機能 */
+        function startGame() {
+            if (!isGameStarted) {
+                isGameStarted = true;
+                resetTimer();
+                startTimer();
+                disableStartButton(); // ゲーム開始時に「スタート」ボタンを無効化
+            }
+        }
+
+        /* 解けるパズルかを判定する関数 */
+        function isSolvable(numbers) {
+            let inversionCount = 0;
+            const flattenedNumbers = numbers.filter(num => num !== null);
+
+            /* 反転数をカウント */
+            for (let i = 0; i < flattenedNumbers.length - 1; i++) {
+                for (let j = i + 1; j < flattenedNumbers.length; j++) {
+                    if (flattenedNumbers[i] > flattenedNumbers[j]) {
+                        inversionCount++;
+                    }
+                }
+            }
+
+            /* 空きマスの位置を下からの行数で取得 */
+            const emptyRowFromBottom = size - Math.floor(numbers.indexOf(null) / size);
+
+            /* サイズが奇数の場合：反転数が偶数であることが必要 */
+            if (size % 2 !== 0) {
+                return inversionCount % 2 === 0;
+            } else {
+                /* サイズが偶数の場合：空きマスの行数と反転数を考慮 */
+                return (emptyRowFromBottom % 2 === 0) === (inversionCount % 2 !== 0);
+            }
+        }
+
+        /* 配列のシャッフル（Fisher-Yatesアルゴリズム） */
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        /* タイルクリック時の処理 */
+        function handleTileClick(index) {
+            startGame(); // 数字ブロックのクリックでゲームスタート可能
+            if (!isGameStarted || isPaused || isGameWon) return;
+
+            /* 空きマスの位置とクリックされたマスを取得 */
+            const emptyIndex = tiles.findIndex(tile => tile.classList.contains('empty'));
+            const [emptyRow, emptyCol] = [Math.floor(emptyIndex / size), emptyIndex % size];
+            const [clickedRow, clickedCol] = [Math.floor(index / size), index % size];
+
+            /* クリックされたマスが空きマスの隣なら交換 */
+            if (Math.abs(emptyRow - clickedRow) + Math.abs(emptyCol - clickedCol) === 1) {
+                swapTiles(index, emptyIndex);
+            } else {
+                /* 直線上にある場合、空きマス方向にタイルを移動 */
+                moveTilesInLine(index, emptyIndex, clickedRow, clickedCol, emptyRow, emptyCol);
+            }
+
+            checkRows();
+
+            /* クリア判定 */
+            if (checkWin()) {
+                stopTimer();
+                displayWinMessage();
+                changeAllTilesToWinColor();
+                isGameWon = true;
+                disablePauseButton(); // クリア後は「ポーズ」ボタンを無効化
+            }
+        }
+
+        /* クリックした数字と空きマスの間にあるタイルを一つずつ動かす */
+        function moveTilesInLine(clickedIndex, emptyIndex, clickedRow, clickedCol, emptyRow, emptyCol) {
+            /* 同じ列で空きマスが上または下にある場合 */
+            if (clickedCol === emptyCol) {
+                if (clickedRow < emptyRow) {
+                    // 空きマスが下にある場合、クリックされたマスと空きマスの間のタイルを順に下に動かす
+                    for (let i = emptyRow; i > clickedRow; i--) {
+                        swapTiles((i - 1) * size + clickedCol, i * size + clickedCol);
+                    }
+                } else {
+                    // 空きマスが上にある場合、クリックされたマスと空きマスの間のタイルを順に上に動かす
+                    for (let i = emptyRow; i < clickedRow; i++) {
+                        swapTiles((i + 1) * size + clickedCol, i * size + clickedCol);
+                    }
+                }
+            }
+
+            /* 同じ行で空きマスが右または左にある場合 */
+            if (clickedRow === emptyRow) {
+                if (clickedCol < emptyCol) {
+                    // 空きマスが右にある場合、クリックされたマスと空きマスの間のタイルを順に右に動かす
+                    for (let i = emptyCol; i > clickedCol; i--) {
+                        swapTiles(clickedRow * size + (i - 1), clickedRow * size + i);
+                    }
+                } else {
+                    // 空きマスが左にある場合、クリックされたマスと空きマスの間のタイルを順に左に動かす
+                    for (let i = emptyCol; i < clickedCol; i++) {
+                        swapTiles(clickedRow * size + (i + 1), clickedRow * size + i);
+                    }
+                }
+            }
+        }
+
+        /* タイルの交換 */
+        function swapTiles(fromIndex, toIndex) {
+            tiles[toIndex].textContent = tiles[fromIndex].textContent;
+            tiles[toIndex].classList.remove('empty');
+            tiles[fromIndex].textContent = '';
+            tiles[fromIndex].classList.add('empty');
+        }
+
+        /* クリア判定 */
+        function checkWin() {
+            for (let i = 0; i < size * size - 1; i++) {
+                if (tiles[i].textContent != i + 1) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        /* タイルが整列されている行の色を変更 */
+        function checkRows() {
+            for (let row = 0; row < size; row++) {
+                const startIndex = row * size;
+                const correct = Array.from({ length: size }, (_, i) => startIndex + i + 1).every((num, i) => {
+                    return tiles[startIndex + i].textContent == num.toString();
+                });
+
+                for (let col = 0; col < size; col++) {
+                    const tileIndex = startIndex + col;
+                    if (correct) {
+                        tiles[tileIndex].classList.add('correct-row');
+                    } else {
+                        tiles[tileIndex].classList.remove('correct-row');
+                    }
+                }
+            }
+        }
+
+        /* クリア時の全タイルの色変更 */
+        function changeAllTilesToWinColor() {
+            tiles.forEach(tile => {
+                if (!tile.classList.contains('empty')) {
+                    tile.classList.add('win-color');
+                }
+            });
+        }
+
+        /* タイマー管理 */
+        function startTimer() {
+            if (timer) clearInterval(timer);
+            timer = setInterval(() => {
+                timeElapsed++;
+                updateTimerDisplay();
+            }, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(timer);
+        }
+
+        function resetTimer() {
+            stopTimer();
+            timeElapsed = 0;
+            updateTimerDisplay();
+            tiles.forEach(tile => {
+                tile.classList.remove('win-color');
+                tile.classList.remove('correct-row');
+            });
+        }
+
+        /* タイマー表示を更新 */
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeElapsed / 60);
+            const seconds = timeElapsed % 60;
+            timerDisplay.textContent = `タイム: ${minutes}分 ${seconds}秒`;
+        }
+
+        /* クリアメッセージ表示 */
+        function displayWinMessage() {
+            const minutes = Math.floor(timeElapsed / 60);
+            const seconds = timeElapsed % 60;
+            resultMessage.textContent = `クリア！おめでとうございます！\n時間: ${minutes}分 ${seconds}秒`;
+            resultPopup.style.display = 'block';
+        }
+
+        /* 「スタート」ボタンの無効化 */
+        function disableStartButton() {
+            startButton.disabled = true;
+            startButton.classList.add('disabled');
+        }
+
+        /* 「スタート」ボタンの有効化 */
+        function enableStartButton() {
+            startButton.disabled = false;
+            startButton.classList.remove('disabled');
+        }
+
+        /* 「ポーズ」ボタンの無効化 */
+        function disablePauseButton() {
+            pauseButton.disabled = true;
+            pauseButton.classList.add('disabled');
+        }
+
+        /* 「ポーズ」ボタンの有効化 */
+        function enablePauseButton() {
+            pauseButton.disabled = false;
+            pauseButton.classList.remove('disabled');
+        }
+
+        /* ポーズボタンの表示をリセット */
+        function resetPauseButtonText() {
+            pauseButton.textContent = 'ポーズ';
+        }
+
+        /* ポーズボタンの機能 */
+        function pauseGame() {
+            if (!isGameStarted) return; // スタートボタンが押されていない場合は無効
+            isPaused = true; // ポーズフラグを立てる
+            stopTimer(); // タイマーを停止
+            pauseButton.textContent = 'リスタート'; // ボタンのテキストを「リスタート」に変更
+        }
+
+        function restartGame() {
+            if (!isGameStarted) return; // スタートボタンが押されていない場合は無効
+            isPaused = false; // ポーズフラグを解除
+            startTimer(); // タイマーを再開
+            pauseButton.textContent = 'ポーズ'; // ボタンのテキストを「ポーズ」に戻す
+        }
+
+        /* ポップアップのボタンイベント */
+        closeButton.addEventListener('click', () => {
+            resultPopup.style.display = 'none';
+        });
+
+        howToPlayButton.addEventListener('click', () => {
+            howToPlayPopup.style.display = 'block';
+        });
+
+        closeHowToPlayButton.addEventListener('click', () => {
+            howToPlayPopup.style.display = 'none';
+        });
+
+        closeUnsolvableButton.addEventListener('click', () => {
+            unsolvablePopup.style.display = 'none';
+        });
+
+        /* ゲームのコントロール */
+        startButton.addEventListener('click', startGame);
+
+        nextGameButton.addEventListener('click', () => {
+            isGameStarted = false;
+            resetPauseButtonText(); // 「次のゲーム」ボタンで「ポーズ」にリセット
+            initializeGame(); // 新しいゲームの開始時に「スタート」ボタンが有効化される
+        });
+
+        pauseButton.addEventListener('click', () => {
+            if (!isGameWon) { // クリア後はポーズボタンを押せないようにする
+                if (isPaused) {
+                    restartGame();
+                } else {
+                    pauseGame();
+                }
+            }
+        });
+
+        /* ゲーム開始時の初期化 */
+        initializeGame();
     </script>
 </body>
 </html>
