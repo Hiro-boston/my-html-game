@@ -155,7 +155,7 @@
                 numbers = Array.from({ length: size * size - 1 }, (_, i) => i + 1);
                 numbers.push(null);
                 shuffleArray(numbers);
-            } while (!isSolvable(numbers));
+            } while (!isSolvable(numbers) || !isGameShuffled(numbers));
 
             tiles = [];
             gameContainer.innerHTML = '';
@@ -178,6 +178,13 @@
                 tiles.push(tile);
             }
             resetTimer();
+        }
+
+        function isGameShuffled(numbers) {
+            for (let i = 0; i < numbers.length - 2; i++) {
+                if (numbers[i] !== i + 1) return true;
+            }
+            return false;
         }
 
         function startGame() {
