@@ -32,7 +32,7 @@
 
         /* 非活性化されたボタンのデザイン */
         #controls button.disabled {
-            background-color: #888; /* グレー系の色 */
+            background-color: #888;
             cursor: not-allowed;
         }
 
@@ -62,7 +62,7 @@
         }
 
         .correct-row, .win-color {
-            background-color: #add8e6; /* 正しい行とクリア時のブロック背景色 */
+            background-color: #add8e6;
         }
 
         /* ポップアップデザイン */
@@ -77,12 +77,10 @@
             padding: 20px;
             border-radius: 10px;
             font-size: 1.5rem;
-            max-width: 400px; /* 横幅を広げる */
+            max-width: 400px;
             width: 90%;
             text-align: center;
-            position: fixed;
-            z-index: 1000; /* ポップアップが前面に出るように設定 */
-            overflow: hidden;
+            z-index: 1000;
         }
 
         /* 閉じるボタン（バツ印）のスタイル */
@@ -109,7 +107,6 @@
     </style>
 </head>
 <body>
-    <!-- コントロールボタン -->
     <div id="controls">
         <button id="start-button">スタート</button>
         <button id="pause-button">ポーズ</button>
@@ -117,10 +114,8 @@
         <button id="how-to-play-button">遊び方</button>
     </div>
     
-    <!-- タイマー表示 -->
     <div id="timer">タイム: 0分 0秒</div>
     
-    <!-- パズルの配置コンテナ -->
     <div id="game-container"></div>
 
     <!-- ポップアップ（クリア、遊び方、不可能なパズル） -->
@@ -141,10 +136,8 @@
     </div>
 
     <script>
-        /* グリッドのサイズ設定 */
         const size = 4;
 
-        /* 各要素の取得 */
         const gameContainer = document.getElementById('game-container');
         const startButton = document.getElementById('start-button');
         const pauseButton = document.getElementById('pause-button');
@@ -159,7 +152,6 @@
         const unsolvablePopup = document.getElementById('unsolvable-popup');
         const closeUnsolvableButton = document.getElementById('close-unsolvable-button');
 
-        /* タイル、タイマー、状態フラグの初期化 */
         let tiles = [];
         let timer = null;
         let timeElapsed = 0;
@@ -167,23 +159,22 @@
         let isPaused = false;
         let isGameWon = false;
 
-        /* ゲームの初期化関数 */
         function initializeGame() {
             let numbers;
             do {
                 numbers = Array.from({ length: size * size - 1 }, (_, i) => i + 1);
-                numbers.push(null); // 空きマス
+                numbers.push(null);
                 shuffleArray(numbers);
-            } while (!isSolvable(numbers)); // 解ける配置が得られるまでシャッフル
+            } while (!isSolvable(numbers));
 
-            /* タイルを作成し、コンテナに追加 */
             tiles = [];
             gameContainer.innerHTML = '';
             resultPopup.style.display = 'none';
             isGameWon = false;
-            enableStartButton(); // 新しいゲーム時に「スタート」ボタンを有効化
-            enablePauseButton(); // 新しいゲーム時に「ポーズ」ボタンを有効化
-            resetPauseButtonText(); // ポーズボタンを「ポーズ」に戻す
+            enableStartButton();
+            enablePauseButton();
+            resetPauseButtonText();
+
             for (let i = 0; i < size * size; i++) {
                 const tile = document.createElement('div');
                 tile.classList.add('tile');
@@ -193,42 +184,64 @@
                     tile.classList.add('empty');
                 }
                 tile.addEventListener('click', () => handleTileClick(i));
-                tile.addEventListener('touchstart', () => handleTileClick(i));
                 gameContainer.appendChild(tile);
                 tiles.push(tile);
             }
             resetTimer();
         }
 
-        /* ゲーム開始機能 */
         function startGame() {
             if (!isGameStarted) {
                 isGameStarted = true;
                 resetTimer();
                 startTimer();
-                disableStartButton(); // ゲーム開始時に「スタート」ボタンを無効化
+                disableStartButton();
             }
         }
 
-        /* ポップアップ表示時にスクロールを防止 */
         function openPopup(popup) {
             popup.style.display = 'block';
-            document.body.classList.add('no-scroll'); // スクロール防止
+            document.body.classList.add('no-scroll');
         }
 
-        /* ポップアップを閉じる */
         function closePopup(popup) {
             popup.style.display = 'none';
-            document.body.classList.remove('no-scroll'); // スクロール許可
+            document.body.classList.remove('no-scroll');
         }
 
-        /* ポップアップボタンのイベント設定 */
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function isSolvable(numbers) {
+            let inversionCount = 0;
+            const flattenedNumbers = numbers.filter(num => num !== null);
+
+            for (let i = 0; i < flattenedNumbers.length - 1; i++) {
+                for (let j = i + 1; j < flattenedNumbers.length; j++) {
+                    if (flattenedNumbers[i] > flattenedNumbers[j]) {
+                        inversionCount++;
+                    }
+                }
+            }
+
+            const emptyRowFromBottom = size - Math.floor(numbers.indexOf(null) / size);
+
+            if (size % 2 !== 0) {
+                return inversionCount % 2 === 0;
+            } else {
+                return (emptyRowFromBottom % 2 === 0) === (inversionCount % 2 !== 0);
+            }
+        }
+
         closeButton.addEventListener('click', () => closePopup(resultPopup));
         closeHowToPlayButton.addEventListener('click', () => closePopup(howToPlayPopup));
         closeUnsolvableButton.addEventListener('click', () => closePopup(unsolvablePopup));
         howToPlayButton.addEventListener('click', () => openPopup(howToPlayPopup));
 
-        /* 初期化の実行 */
         initializeGame();
     </script>
 </body>
