@@ -77,8 +77,25 @@
             padding: 20px;
             border-radius: 10px;
             font-size: 1.5rem;
-            max-width: 90%;
+            max-width: 600px; /* 横幅を広げる */
+            width: 90%;
             text-align: center;
+            z-index: 1000;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 1.5rem;
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+        }
+
+        .close-btn:focus {
+            outline: none;
         }
     </style>
 </head>
@@ -99,19 +116,19 @@
 
     <!-- ポップアップ（クリア、遊び方、不可能なパズル） -->
     <div id="result-popup">
-        <div id="result-message"></div>
-        <button id="close-button">閉じる</button>
+        <div id="result-message">クリアしました！おめでとうございます！</div>
+        <button class="close-btn" id="close-button">✕</button>
     </div>
     <div id="how-to-play-popup">
         <h2>遊び方</h2>
         <p>数字をクリックして、空いているマスへ移動させます。</p>
         <p>1から15の数字を、左上から順番に並べるとクリアです。</p>
-        <button id="close-how-to-play-button">閉じる</button>
+        <button class="close-btn" id="close-how-to-play-button">✕</button>
     </div>
     <div id="unsolvable-popup">
         <h2>解けないパズル</h2>
         <p>このパズルは解けません。もう一度シャッフルしてください。</p>
-        <button id="close-unsolvable-button">閉じる</button>
+        <button class="close-btn" id="close-unsolvable-button">✕</button>
     </div>
 
     <script>
