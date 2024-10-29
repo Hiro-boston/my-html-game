@@ -172,6 +172,7 @@
             gameContainer.innerHTML = '';
             resultPopup.style.display = 'none';
             isGameWon = false;
+            isPaused = false; // ポーズ状態をリセット
             enableStartButton(); // 新しいゲーム時に「スタート」ボタンを有効化
             enablePauseButton(); // 新しいゲーム時に「ポーズ」ボタンを有効化
             resetPauseButtonText(); // ポーズボタンを「ポーズ」に戻す
@@ -448,6 +449,7 @@
 
         nextGameButton.addEventListener('click', () => {
             isGameStarted = false;
+            isPaused = false; // ポーズ状態をリセット
             resetPauseButtonText(); // 「次のゲーム」ボタンで「ポーズ」にリセット
             initializeGame(); // 新しいゲームの開始時に「スタート」ボタンが有効化される
         });
