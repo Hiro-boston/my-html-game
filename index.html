@@ -66,23 +66,40 @@
         }
 
         /* ポップアップデザイン */
+                
                 #result-popup {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
-            font-size: 1.5rem;
-            max-width: 600px; /* 横幅を広げる */
-            width: 90%;
-            height: auto; /* 縦幅を長くする */
-            text-align: center;
-            z-index: 1000;
-        }
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(0, 0, 0, 0.9); /* 背景色 */
+    color: white;
+    padding: 20px 20px 10px; /* 下部の余白を減らす */
+    border-radius: 10px;
+    font-size: 1.5rem;
+    max-width: 400px; /* 横幅を調整 */
+    width: 80%;
+    text-align: center;
+    z-index: 1000;
+}
+
+#result-message {
+    margin-bottom: 10px; /* メッセージと×ボタンの間隔を確保 */
+    white-space: pre-line; /* 改行を適用 */
+}
+
+.close-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 1.5rem;
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+}
+
        #how-to-play-popup, #unsolvable-popup {
             display: none;
             position: fixed;
@@ -397,7 +414,7 @@
         function displayWinMessage() {
             const minutes = Math.floor(timeElapsed / 60);
             const seconds = timeElapsed % 60;
-            resultMessage.textContent = `クリア！おめでとうございます！\n時間: ${minutes}分 ${seconds}秒`;
+            resultMessage.textContent = `クリア！\nおめでとうございます！\n時間: ${minutes}分 ${seconds}秒`;
             resultPopup.style.display = 'block';
         }
 
